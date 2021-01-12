@@ -1,0 +1,18 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+    <div class="container">
+    {% if user.is_authenticated %}
+        <h3>New Post</h3>
+        <form action="{% url 'new_post' %}" method="post">
+            {% csrf_token %}
+            <textarea name="new-post" id="new-post" cols="30" rows="2" class="form-control" placeholder="Enter 300 or fewer characters"></textarea>
+            <input type="submit" value="Post" class="btn btn-primary">
+        </form>
+        <hr> 
+    {% endif %}
+        <h3>All Posts</h3>
+        {% include 'network/card.html' %}    
+    </div>
+    
+{% endblock %}

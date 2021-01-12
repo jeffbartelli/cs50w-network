@@ -1,0 +1,23 @@
+{% extends "network/layout.html" %}
+
+{% block title %}
+    Network: {{ user.username|capfirst }}'s Profile
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <h1>{{ user.username|capfirst }}'s Network Profile
+        {% if not user.username and user.is_authenticated %}
+        <input type="button" value="Follow" class="btn btn-info" id="follow-btn">
+        {% endif %}
+    </h1>
+    <h4>{{ user.username|capfirst }} follows {{ iFollow }} other Networkers.</h4>
+    <h4>{{ followerCount }} Networkers follow {{ user.username|capfirst }}.</h4>
+
+    <h3>{{ user.username|capfirst }}'s Posts</h3>
+    {% include 'network/card.html' %}
+</div>
+
+
+    
+{% endblock %}

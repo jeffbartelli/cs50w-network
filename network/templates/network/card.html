@@ -1,0 +1,17 @@
+{% for post in allPosts %}
+<div class="card mb-1 px-2">
+    <p>{{post.content}}</p>
+    <h6>
+        {% if user.username %}
+        <a href="#">Edit Post</a>
+        {% endif %}
+        | Posted by: 
+        <a href="{% url 'profile' user.username %}">{{post.owner|capfirst}}</a> on: {{post.created_date}} 
+        | <a href="{% url 'likes' post.id %}" data-postId="{{post.id}}" data-userId="{{user.username}}" class="like-btn">Like</a> <span style="color:red;">&hearts;</span> <span class="like-count">0</span>
+    </h6>
+    <h6>
+        <input type="button" value="Like" class="btn btn-outline-primary btn-sm">
+        
+    </h6>
+</div>
+{% endfor %}
