@@ -2,16 +2,21 @@
 <div class="card mb-1 px-2">
     <p>{{post.content}}</p>
     <h6>
-        {% if user.username %}
-        <a href="#">Edit Post</a>
+        {% if user.username == post.owner %}
+        <a href="#">Edit Post</a> | 
         {% endif %}
-        | Posted by: 
-        <a href="{% url 'profile' user.username %}">{{post.owner|capfirst}}</a> on: {{post.created_date}} 
-        | <a href="{% url 'likes' post.id %}" data-postId="{{post.id}}" data-userId="{{user.username}}" class="like-btn">Like</a> <span style="color:red;">&hearts;</span> <span class="like-count">0</span>
-    </h6>
-    <h6>
-        <input type="button" value="Like" class="btn btn-outline-primary btn-sm">
-        
+        Posted by: 
+        {% if user.is_authenticated %}
+        <a href="{% url 'profile' post.owner %}">{{post.owner|capfirst}}</a> 
+        {% else %}
+        {{post.owner|capfirst}}
+        {% endif %}
+        on: {{post.created_date}} 
+        | 
+        {% if not user.username == post.owner and user.is_authenticated %}
+        <a href="#" data-postId="{{post.id}}" data-userId="{{user.username}}" class="like-btn">Like</a> 
+        {% endif %}
+        <span style="color:red;">&hearts;</span> <span class="like-count">{{ post.likes }}</span>
     </h6>
 </div>
 {% endfor %}

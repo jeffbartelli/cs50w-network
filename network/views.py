@@ -1,9 +1,12 @@
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Post, Follower, Like
 
@@ -78,7 +81,7 @@ def new_post(request):
         return render(request, "network/index.html")
 
 def profile(request, username):
-    profile = User.objects.filter(username = username)
+    profile = User.objects.get(username = username)
     followerCount = Follower.objects.filter(userId = username).count()
     iFollow = Follower.objects.filter(followedId = username).count()
     myPosts = Post.objects.filter(owner = username).order_by('-created_date')
@@ -93,10 +96,32 @@ def profile(request, username):
 def following(request):
     return render(request, "network/following.html")
 
-def likes(request, postid):
-    # like = Like()
-    # user = like.userId = request.user.username
-    # post = like.postId = postid
-    # like.save()
-    # totalikes = Like.objects.filter(postId = postid).count()
-    pass
+@csrf_exempt
+@login_required
+def likes(request):
+    # Retrieve the data
+    data = json.loads(request.body)
+    userId = data.get("userId", "")
+    postId = data.get("postId", "")
+    # Perhaps get rid of this if not needed
+    status = data.get("status", "")
+
+
+
+
+    
+    # Test if this is a duplicate like
+    if not Like.objects.filter(userId=userId, postId=postId):
+        # Record the like
+        like = Like()
+        like.postId = postId
+        like.userId = userId
+        like.save()
+        # Record the like count
+        post = Post.objects.get(pk=postId)
+        post.likes = post.likes + 1
+        post.save()
+
+    # Return the count of likes
+    return JsonResponse({"count": Like.objects.filter(postId = postId).count()}, status=201)
+    
