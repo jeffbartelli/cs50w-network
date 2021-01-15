@@ -10,12 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 
 from .models import User, Post, Follower, Like
 
-
 def index(request):
     return render(request, "network/index.html", {
         "allPosts": Post.objects.order_by('-created_date')
     })
-
 
 def login_view(request):
     if request.method == "POST":
@@ -82,15 +80,23 @@ def new_post(request):
 
 def profile(request, username):
     profile = User.objects.get(username = username)
-    followerCount = Follower.objects.filter(userId = username).count()
-    iFollow = Follower.objects.filter(followedId = username).count()
+    # followerCount = Follower.objects.filter(userId = username).count()
+    # iFollow = Follower.objects.filter(followedId = username).count()
     myPosts = Post.objects.filter(owner = username).order_by('-created_date')
+
+    user = request.user
+    follows = Follower.objects.get_or_create(star=profile)[0]
+    if user in follows.followers.all():
+        followText = "Unfollow"
+    else:
+        followText = "Follow"
 
     return render(request, "network/profile.html", {
         "profile": profile,
-        "followerCount": followerCount,
-        "iFollow": iFollow,
-        "allPosts": myPosts
+        # "followerCount": followerCount,
+        # "iFollow": iFollow,
+        "allPosts": myPosts,
+        "state": followText
     })
 
 def following(request):
@@ -98,30 +104,49 @@ def following(request):
 
 @csrf_exempt
 @login_required
+def follow(request):
+    followText = ''
+    user = request.user
+    # Retrieve the Data
+    data = json.loads(request.body)
+    target = data.get("target", "")
+    follows = Follower.objects.get_or_create(star=target)[0]
+    if user in follows.followers.all():
+        follows.followers.remove(user)
+        followText = "Follow"
+    else:
+        follows.followers.add(user)
+        follows.save()
+        followText = "Unfollow"
+    
+    return JsonResponse({
+        "followText": followText
+    }, status=201)
+
+@csrf_exempt
+@login_required
 def likes(request):
+    liker = ''
+    user = request.user
     # Retrieve the data
     data = json.loads(request.body)
-    userId = data.get("userId", "")
     postId = data.get("postId", "")
-    # Perhaps get rid of this if not needed
-    status = data.get("status", "")
+    likedPost = Post.objects.get(pk=postId)
+    if user in likedPost.liked.all():
+        likedPost.liked.remove(user)
+        liked = Like.objects.get(post=likedPost, user=user)
+        liked.delete()
+        liker = 'Like'
+    else:
+        liked = Like.objects.get_or_create(post=likedPost, user=user)
+        likedPost.liked.add(user)
+        likedPost.save()
+        liker = 'Unlike'
+    # Return the liker count and value
+    return JsonResponse({
+        "count": likedPost.liked.all().count(),
+        "liker": liker
+        }, status=201)
 
-
-
-
-    
-    # Test if this is a duplicate like
-    if not Like.objects.filter(userId=userId, postId=postId):
-        # Record the like
-        like = Like()
-        like.postId = postId
-        like.userId = userId
-        like.save()
-        # Record the like count
-        post = Post.objects.get(pk=postId)
-        post.likes = post.likes + 1
-        post.save()
-
-    # Return the count of likes
-    return JsonResponse({"count": Like.objects.filter(postId = postId).count()}, status=201)
-    
+def edit(request):
+    pass

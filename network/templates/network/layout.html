@@ -48,6 +48,92 @@
             {% block body %}
             {% endblock %}
         </div>
-        <script src="static/network/script.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+
+                document.querySelectorAll('.like-btn').forEach((item) => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log('trigger-like');
+                    
+                        fetch('/likes', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                postId: this.getAttribute('data-postId')
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            item.parentNode.querySelector(".like-count").innerHTML = result.count;
+                            this.innerHTML = result.liker;
+                        });
+                    });
+                });
+
+                document.querySelectorAll('.edit-btn').forEach((item) => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+
+                        this.parentNode.parentNode.firstElementChild.style.display = "none";
+
+                        this.parentElement.parentElement.children[1].style.display = "block";
+
+                        this.parentElement.previousElementSibling.querySelector(".editor").focus();
+
+                    });
+                });
+
+                document.querySelectorAll('.editor-save').forEach((item) => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        console.log(this);
+                        
+                        newVal = this.parentElement.parentElement.firstElementChild.value;
+                    
+                        fetch('/edit', {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                "content": newVal,
+                                "user": this.getAttribute('data-user')
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(result => {
+                            console.log(result);
+                        });
+
+
+                        // Set the value on page
+                        this.parentNode.parentNode.firstElementChild.value = newVal;
+
+                        // Change the visibility. Something isn't working right here. Perhaps a result of the failed api call
+                        this.parentElement.parentElement.children[1].style.display = "none";
+
+                        this.parentNode.parentNode.firstElementChild.style.display = "block";
+                    });
+                });
+
+
+
+
+                document.querySelector('#follow-btn').addEventListener('click', function(e) {
+                    console.log('triggered-follow');
+                    e.preventDefault();
+
+                    fetch('/follow', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            target: this.getAttribute('data-target')
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        this.innerHTML = result.followText;
+                    })
+                });
+
+
+            });
+        </script>
     </body>
 </html>

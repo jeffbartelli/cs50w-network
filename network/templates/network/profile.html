@@ -7,17 +7,15 @@
 {% block body %}
 <div class="container">
     <h1>{{ profile|capfirst }}'s Network Profile
-        {% if not user.username and user.is_authenticated %}
-        <input type="button" value="Follow" class="btn btn-info" id="follow-btn">
+        {% if user.is_authenticated and user != profile %}
+        <a href="#" data-target="{{ profile }}" class="btn btn-info btn-sm" id="follow-btn" role="button">{{ state }}</a>
         {% endif %}
     </h1>
-    <h4>{{ profile|capfirst }} follows {{ iFollow }} other Networkers.</h4>
-    <h4>{{ followerCount }} Networkers follow {{ profile|capfirst }}.</h4>
+    <h4>{{ profile|capfirst }} follows other Networkers.</h4>
+    <h4>Networkers follow {{ profile|capfirst }}.</h4>
 
     <h3>{{ profile|capfirst }}'s Posts</h3>
     {% include 'network/card.html' %}
 </div>
-
-
     
 {% endblock %}
