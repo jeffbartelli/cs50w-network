@@ -1,10 +1,11 @@
 {% for post in allPosts %}
 <div class="card mb-1 px-2">
     <p class="content">{{post.content}}</p>
-    <div class="input-group" style="display:none;">
+    <div class="input-group" style="display: none">
         <input type="text" class="form-control editor" value="{{post.content}}">
         <div class="input-group-btn">
-            <button class="btn btn-outline-secondary editor-save" type="button" data-user="{{ user.username }}">Save</button>
+            <button class="btn btn-outline-secondary editor-cancel" type="button" data-user="{{ user.username }}" data-postId="{{post.id}}">Cancel</button>
+            <button class="btn btn-outline-secondary editor-save" type="button" data-user="{{ user.username }}" data-postId="{{post.id}}">Save</button>
         </div>
     </div>
     <h6>
@@ -14,11 +15,11 @@
         {% else %}
         {{post.owner|capfirst}}
         {% endif %}
-        on: {{post.created_date}} 
+        on: <span class="date">{{post.created_date}}</span> 
         | 
         {% if user.username == post.owner %}
         <a href="#" class="edit-btn">Edit</a> |
-        <a href="#" class="delete-btn">Delete</a> | 
+        <a href="#" class="delete-btn" data-postId="{{post.id}}">Delete</a> | 
         {% endif %}
         {% if not user.username == post.owner and user.is_authenticated %}
             {% if request.user in post.liked.all %}

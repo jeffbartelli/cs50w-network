@@ -7,6 +7,7 @@ from django.urls import reverse
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
+from django.core.paginator import Paginator
 
 from .models import User, Post, Follower, Like
 
@@ -80,47 +81,71 @@ def new_post(request):
 
 def profile(request, username):
     profile = User.objects.get(username = username)
-    # followerCount = Follower.objects.filter(userId = username).count()
-    # iFollow = Follower.objects.filter(followedId = username).count()
+    followerCount = Follower.objects.filter(star = username).count()
+    iFollow = Follower.objects.filter(follower = username).count()
     myPosts = Post.objects.filter(owner = username).order_by('-created_date')
 
     user = request.user
-    follows = Follower.objects.get_or_create(star=profile)[0]
-    if user in follows.followers.all():
-        followText = "Unfollow"
+    follows = Follower.objects.filter(star=profile, follower=user)
+    if not follows:
+        followText = "Follow Me"
     else:
-        followText = "Follow"
+        followText = "Unfollow Me"
 
     return render(request, "network/profile.html", {
         "profile": profile,
-        # "followerCount": followerCount,
-        # "iFollow": iFollow,
+        "followerCount": followerCount,
+        "iFollow": iFollow,
         "allPosts": myPosts,
         "state": followText
     })
 
 def following(request):
-    return render(request, "network/following.html")
+    warning = ''
+    friends = Follower.objects.filter(follower = request.user)
+    posts = Post.objects.all().order_by('-created_date')
+    filteredPosts = []
+    for post in posts:
+        for friend in friends:
+            if friend.star == post.owner:
+                filteredPosts.append(post)
+    
+    if not friends:
+        warning = "You are not following anybody."
+    
+    return render(request, "network/following.html", {
+        "allPosts": filteredPosts,
+        "warning": warning
+    })
 
 @csrf_exempt
 @login_required
 def follow(request):
     followText = ''
-    user = request.user
     # Retrieve the Data
     data = json.loads(request.body)
-    target = data.get("target", "")
-    follows = Follower.objects.get_or_create(star=target)[0]
-    if user in follows.followers.all():
-        follows.followers.remove(user)
-        followText = "Follow"
-    else:
-        follows.followers.add(user)
-        follows.save()
-        followText = "Unfollow"
+    star = data.get("target", "")
+    follower = request.user
+    profile = User.objects.get(username = star)
     
+    follows = Follower.objects.filter(star=profile, follower=follower)
+    if not follows:
+        following = Follower()
+        following.star = profile
+        following.follower = follower
+        following.save()
+        followText = "Unfollow Me"
+    else:
+        follows.delete()
+        followText = "Follow Me"
+    
+    followerCount = Follower.objects.filter(star = profile).count()
+    iFollow = Follower.objects.filter(follower = follower).count()
+
     return JsonResponse({
-        "followText": followText
+        "followText": followText,
+        "followerCount": followerCount,
+        "iFollow": iFollow,
     }, status=201)
 
 @csrf_exempt
@@ -148,5 +173,33 @@ def likes(request):
         "liker": liker
         }, status=201)
 
+@csrf_exempt
+@login_required
 def edit(request):
-    pass
+    user = request.user
+    # Retrieve the data
+    data = json.loads(request.body)
+    owner = data.get("user", "")
+    content = data.get("content", "")
+    postId = data.get("postId", "")
+    post = Post.objects.get(pk=postId)
+    post.content = content
+    post.created_date = datetime.now()
+    post.save()
+
+    return JsonResponse({
+    "content": content,
+    "time": post.created_date
+    })
+
+@csrf_exempt
+@login_required
+def delete(request):
+    data = json.loads(request.body)
+    postId = data.get("postId", "")
+    post = Post.objects.get(pk=postId)
+    post.delete()
+
+    return JsonResponse({
+    "success": "success"
+    })

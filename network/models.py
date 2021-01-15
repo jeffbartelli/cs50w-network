@@ -11,8 +11,8 @@ class Post(models.Model):
     liked = models.ManyToManyField('User', default=None, blank=True, related_name='likes')
 
 class Follower(models.Model):
-    star = models.CharField(max_length=50)
-    followers = models.ManyToManyField('User', default=None, blank=True, related_name='followers')
+    star = models.CharField(max_length=50, blank=False, default=None)
+    follower = models.CharField(max_length=50, blank=False, default=None)
 
 class Like(models.Model):
     user = models.ForeignKey('User', on_delete=models.CASCADE)

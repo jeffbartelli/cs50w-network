@@ -2,6 +2,12 @@
 
 {% block body %}
 <div class="container">
-    TODO
+    
+    <h3>See what your friends are saying:</h3>
+    {% if warning %}
+        {{ warning }}
+    {% endif %}
+    {% include 'network/card.html' %} 
 </div>
+
 {% endblock %}
