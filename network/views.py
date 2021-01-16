@@ -7,13 +7,25 @@ from django.urls import reverse
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
-from django.core.paginator import Paginator
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import User, Post, Follower, Like
 
 def index(request):
+    posts = Post.objects.order_by('-created_date')
+    pageNumber = request.GET.get('page', 1)
+    paginator = Paginator(posts, 10)
+    
+    try:
+        postSet = paginator.page(pageNumber)
+    except PageNotAnInteger:
+        postSet = paginator.page(1)
+    except EmptyPage:
+        postSet = paginator.page(paginator.num_pages)
+
+    
     return render(request, "network/index.html", {
-        "allPosts": Post.objects.order_by('-created_date')
+        "allPosts": postSet
     })
 
 def login_view(request):
@@ -92,11 +104,20 @@ def profile(request, username):
     else:
         followText = "Unfollow Me"
 
+    page = request.GET.get('page', 1)
+    paginator = Paginator(myPosts, 10)
+    try:
+        postSet = paginator.page(page)
+    except PageNotAnInteger:
+        postSet = paginator.page(1)
+    except EmptyPage:
+        postSet = paginator.page(paginator,num_pages)
+
     return render(request, "network/profile.html", {
         "profile": profile,
         "followerCount": followerCount,
         "iFollow": iFollow,
-        "allPosts": myPosts,
+        "allPosts": postSet,
         "state": followText
     })
 
@@ -113,8 +134,17 @@ def following(request):
     if not friends:
         warning = "You are not following anybody."
     
+    page = request.GET.get('page', 1)
+    paginator = Paginator(filteredPosts, 10)
+    try:
+        postSet = paginator.page(page)
+    except PageNotAnInteger:
+        postSet = paginator.page(1)
+    except EmptyPage:
+        postSet = paginator.page(paginator,num_pages)
+
     return render(request, "network/following.html", {
-        "allPosts": filteredPosts,
+        "allPosts": postSet,
         "warning": warning
     })
 
